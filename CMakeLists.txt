@@ -17,14 +17,15 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
 endif()
 
 # Build flags
-add_definitions(-Dgq_BUILDING)
+add_definitions(-Dgq__BUILDING)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_definitions(-Dgq_DEBUG)
+    add_definitions(-Dgq__DEBUG)
+    add_definitions(-Dgl__MACRODEBUG)
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
-    add_definitions(-Dgq_STRIPPED)
+    add_definitions(-Dgq__STRIPPED)
 endif()
 
 

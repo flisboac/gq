@@ -358,6 +358,89 @@
     #define gq_CONFIG_INCLUDINGIMPL 0
 #endif
 
+#if gq_CONFIG_OS_IS_WINDOWS && gq_CONFIG_COMPILER_IS_GCC_LIKE
+    #ifdef gq_CONFIG_BINTYPE_IS_STATICLIB
+        #define gq_CONFIG_FT_EXTERNAL_GCC_ATTRIBUTE_
+    #elif gq_CONFIG_BINTYPE_IS_SHAREDLIB || gq_CONFIG_BINTYPE_IS_EXECUTABLE
+        #define gq_CONFIG_FT_EXTERNAL_GCC_DECLSPEC_
+    #else
+        #define gq_CONFIG_FT_EXTERNAL_GCC_DECLSPEC_
+    #endif
+    #define gq_CONFIG_FT_INTERNAL_GCC_ATTRIBUTE_
+#elif gq_CONFIG_OS_IS_WINDOWS
+    #if gq_CONFIG_BINTYPE_IS_SHAREDLIB || gq_CONFIG_BINTYPE_IS_EXECUTABLE
+        #define gq_CONFIG_FT_EXTERNAL_DECLSPEC_
+    #endif
+#elif gq_CONFIG_COMPILER_IS_GCC_LIKE
+    #define gq_CONFIG_FT_EXTERNAL_GCC_ATTRIBUTE_
+    #define gq_CONFIG_FT_INTERNAL_GCC_ATTRIBUTE_
+#endif
+
+
+#ifdef gq_CONFIG_FT_EXTERNAL_DECLSPEC_
+#	define gq_CONFIG_MARKER_API_EXPORT __declspec(dllexport)
+#	define gq_CONFIG_MARKER_API_IMPORT __declspec(dllimport) extern
+#	define gq_CONFIG_MARKER_API_IMPL
+#	define gq_CONFIG_MARKER_VAR_EXPORT __declspec(dllexport)
+#	define gq_CONFIG_MARKER_VAR_IMPORT __declspec(dllimport) extern
+#	define gq_CONFIG_MARKER_VAR_IMPL
+#	define gq_CONFIG_MARKER_CLS_EXPORT __declspec(dllexport)
+#	define gq_CONFIG_MARKER_CLS_IMPORT __declspec(dllimport)
+#	define gq_CONFIG_MARKER_CLS_IMPL
+#elif defined(gq_CONFIG_FT_EXTERNAL_GCC_DECLSPEC_)
+#	define gq_CONFIG_MARKER_API_EXPORT __attribute__((dllexport))
+#	define gq_CONFIG_MARKER_API_IMPORT __attribute__((dllimport)) extern
+#	define gq_CONFIG_MARKER_API_IMPL
+#	define gq_CONFIG_MARKER_VAR_EXPORT __attribute__((dllexport))
+#	define gq_CONFIG_MARKER_VAR_IMPORT __attribute__((dllimport)) extern
+#	define gq_CONFIG_MARKER_VAR_IMPL
+#	define gq_CONFIG_MARKER_CLS_EXPORT __attribute__((dllexport))
+#	define gq_CONFIG_MARKER_CLS_IMPORT __attribute__((dllimport))
+#	define gq_CONFIG_MARKER_CLS_IMPL
+#elif defined(gq_CONFIG_FT_EXTERNAL_GCC_ATTRIBUTE_)
+#	define gq_CONFIG_MARKER_API_EXPORT __attribute__((visibility("default")))
+#	define gq_CONFIG_MARKER_API_IMPORT extern
+#	define gq_CONFIG_MARKER_API_IMPL
+#	define gq_CONFIG_MARKER_VAR_EXPORT __attribute__((visibility("default")))
+#	define gq_CONFIG_MARKER_VAR_IMPORT extern
+#	define gq_CONFIG_MARKER_VAR_IMPL
+#	define gq_CONFIG_MARKER_CLS_EXPORT __attribute__((visibility("default")))
+#	define gq_CONFIG_MARKER_CLS_IMPORT
+#	define gq_CONFIG_MARKER_CLS_IMPL
+#else
+#	define gq_CONFIG_MARKER_API_EXPORT extern
+#	define gq_CONFIG_MARKER_API_IMPORT
+#	define gq_CONFIG_MARKER_API_IMPL
+#	define gq_CONFIG_MARKER_VAR_EXPORT
+#	define gq_CONFIG_MARKER_VAR_IMPORT
+#	define gq_CONFIG_MARKER_VAR_IMPL
+#	define gq_CONFIG_MARKER_CLS_EXPORT
+#	define gq_CONFIG_MARKER_CLS_IMPORT
+#	define gq_CONFIG_MARKER_CLS_IMPL
+#endif
+
+#ifdef gq_CONFIG_FT_INTERNAL_GCC_ATTRIBUTE_
+#	define gq_CONFIG_MARKER_IAPI_EXPORT __attribute__((visibility("hidden")))
+#	define gq_CONFIG_MARKER_IAPI_IMPORT extern
+#	define gq_CONFIG_MARKER_IAPI_IMPL
+#	define gq_CONFIG_MARKER_IVAR_EXPORT __attribute__((visibility("hidden")))
+#	define gq_CONFIG_MARKER_IVAR_IMPORT extern
+#	define gq_CONFIG_MARKER_IVAR_IMPL
+#	define gq_CONFIG_MARKER_ICLS_EXPORT __attribute__((visibility("hidden")))
+#	define gq_CONFIG_MARKER_ICLS_IMPORT
+#	define gq_CONFIG_MARKER_ICLS_IMPL
+#else
+#	define gq_CONFIG_MARKER_IAPI_EXPORT extern
+#	define gq_CONFIG_MARKER_IAPI_IMPORT
+#	define gq_CONFIG_MARKER_IAPI_IMPL
+#	define gq_CONFIG_MARKER_IVAR_EXPORT
+#	define gq_CONFIG_MARKER_IVAR_IMPORT
+#	define gq_CONFIG_MARKER_IVAR_IMPL
+#	define gq_CONFIG_MARKER_ICLS_EXPORT
+#	define gq_CONFIG_MARKER_ICLS_IMPORT
+#	define gq_CONFIG_MARKER_ICLS_IMPL
+#endif
+
 //
 // [[ LIBRARY INTERFACE MARKERS ]]
 //
@@ -365,16 +448,45 @@
 #define gq_BEGIN_CODE namespace gq_CONFIG_ROOT_NAMESPACE_NAME { inline namespace gq_CONFIG_ABI_NAMESPACE_NAME {
 #define gq_END_CODE }}
 
-#define gq_API
-#define gq_IAPI
-#define gq_FIMPL inline
+#if gq_CONFIG_BUILDING || gq_CONFIG_INLINEIMPL || gq_CONFIG_BINTYPE_IS_HEADERLIB
+    #define gq_API gq_CONFIG_MARKER_API_EXPORT
+    #define gq_IAPI gq_CONFIG_MARKER_IAPI_EXPORT
+    #define gq_VAR gq_CONFIG_MARKER_VAR_EXPORT
+    #define gq_IVAR gq_CONFIG_MARKER_IVAR_EXPORT
+    #define gq_CLASS gq_CONFIG_MARKER_CLS_EXPORT
+    #define gq_ICLASS gq_CONFIG_MARKER_ICLS_EXPORT
+#else
+    #define gq_API gq_CONFIG_MARKER_API_IMPORT
+    #define gq_IAPI gq_CONFIG_MARKER_IAPI_IMPORT
+    #define gq_VAR gq_CONFIG_MARKER_VAR_IMPORT
+    #define gq_IVAR gq_CONFIG_MARKER_IVAR_IMPORT
+    #define gq_CLASS gq_CONFIG_MARKER_CLS_IMPORT
+    #define gq_ICLASS gq_CONFIG_MARKER_ICLS_IMPORT
+#endif
 
-#define gq_VAR
-#define gq_IVAR
-#define gq_VIMPL gq_INLINEVAR_
+#if gq_CONFIG_INLINEIMPL
+    #define gq_FIMPL inline
+    #define gq_VIMPL gq_INLINEVAR_
+#else
+    #define gq_FIMPL
+    #define gq_VIMPL
+#endif
 
-#define gq_CLASS
-#define gq_ICLASS
+
+//
+// [[ PREPROCESSOR DEBUGGING ]]
+//
+
+#ifdef gl__MACRODEBUG
+#	pragma message gq_STRFY_(gq_API) ": " gq_STRFY(gq_API)
+#	pragma message gq_STRFY_(gq_IAPI) ": " gq_STRFY(gq_IAPI)
+#	pragma message gq_STRFY_(gq_FIMPL) ": " gq_STRFY(gq_FIMPL)
+#	pragma message gq_STRFY_(gq_VAR) ": " gq_STRFY(gq_VAR)
+#	pragma message gq_STRFY_(gq_IVAR) ": " gq_STRFY(gq_IVAR)
+#	pragma message gq_STRFY_(gq_VIMPL) ": " gq_STRFY(gq_VIMPL)
+#	pragma message gq_STRFY_(gq_CLASS) ": " gq_STRFY(gq_CLASS)
+#	pragma message gq_STRFY_(gq_ICLASS) ": " gq_STRFY(gq_ICLASS)
+#endif
 
 #else
 
