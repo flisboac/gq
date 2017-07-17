@@ -477,7 +477,7 @@
 // [[ PREPROCESSOR DEBUGGING ]]
 //
 
-#ifdef gl__MACRODEBUG
+#ifdef gq__MACRODEBUG
 #	pragma message gq_STRFY_(gq_API) ": " gq_STRFY(gq_API)
 #	pragma message gq_STRFY_(gq_IAPI) ": " gq_STRFY(gq_IAPI)
 #	pragma message gq_STRFY_(gq_FIMPL) ": " gq_STRFY(gq_FIMPL)
