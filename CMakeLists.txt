@@ -20,11 +20,15 @@ endif()
 add_definitions(-Dgq__BUILDING)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_definitions(-Dgq__DEBUG)
+    add_definitions(-Dgq__DEBUG -Dgq__BUILD=debug)
+endif()
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_definitions(-Dgq__BUILD=release)
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
-    add_definitions(-Dgq__STRIPPED)
+    add_definitions(-Dgq__STRIPPED -Dgq__BUILD=minrelease)
 endif()
 
 

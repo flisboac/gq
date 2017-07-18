@@ -28,17 +28,28 @@
 
 // COMPILERS
 
-#define gq_CONFIG_COMPILER_GCC   1
-#define gq_CONFIG_COMPILER_CLANG 2
-#define gq_CONFIG_COMPILER_MSVC  3
+#define gq_CONFIG_COMPILER_GCC    1
+#define gq_CONFIG_COMPILER_CLANG  2
+#define gq_CONFIG_COMPILER_MSVC   3
+#define gq_CONFIG_COMPILER_MINGW  4
+#define gq_CONFIG_COMPILER_CYGWIN 4
 
-#define gq_CONFIG_COMPILER_GCC_NAME   "gcc"
+#define gq_CONFIG_COMPILER_UNKNOWN_NAME "unknown"
+#define gq_CONFIG_COMPILER_GCC_NAME "gcc"
 #define gq_CONFIG_COMPILER_CLANG_NAME "clang"
-#define gq_CONFIG_COMPILER_MSVC_NAME  "msvc"
+#define gq_CONFIG_COMPILER_MSVC_NAME "msvc"
+#define gq_CONFIG_COMPILER_MINGW_NAME "mingw"
+#define gq_CONFIG_COMPILER_CYGWIN_NAME "cygwin"
 
 #define gq_CONFIG_COMPILER_IS_MSVC (gq_CONFIG_COMPILER_DETECTED == gq_CONFIG_COMPILER_MSVC)
 #define gq_CONFIG_COMPILER_IS_GCC (gq_CONFIG_COMPILER_DETECTED == gq_CONFIG_COMPILER_GCC)
 #define gq_CONFIG_COMPILER_IS_CLANG (gq_CONFIG_COMPILER_DETECTED == gq_CONFIG_COMPILER_CLANG)
+#define gq_CONFIG_COMPILER_IS_MINGW (gq_CONFIG_COMPILER_DETECTED == gq_CONFIG_COMPILER_MINGW)
+#define gq_CONFIG_COMPILER_IS_CYGWIN (gq_CONFIG_COMPILER_DETECTED == gq_CONFIG_COMPILER_CYGWIN)
+
+#define gq_CONFIG_COMPILER_IS_GCC_BASED (gq_CONFIG_COMPILER_IS_GCC || gq_CONFIG_COMPILER_IS_MINGW || gq_CONFIG_COMPILER_IS_CYGWIN)
+#define gq_CONFIG_COMPILER_IS_GCC_LIKE (gq_CONFIG_COMPILER_IS_CLANG || gq_CONFIG_COMPILER_IS_GCC || gq_CONFIG_COMPILER_IS_MINGW || gq_CONFIG_COMPILER_IS_CYGWIN)
+#define gq_CONFIG_COMPILER_IS_WINDOWS_LIKE (gq_CONFIG_COMPILER_IS_MSVC || gq_CONFIG_COMPILER_IS_MINGW || gq_CONFIG_COMPILER_IS_CYGWIN)
 
 
 // OPERATING SYSTEMS
@@ -47,6 +58,7 @@
 #define gq_CONFIG_OS_APPLE   2
 #define gq_CONFIG_OS_WINDOWS 3
 
+#define gq_CONFIG_OS_UNKNOWN_NAME "unknown"
 #define gq_CONFIG_OS_LINUX_NAME   "linux"
 #define gq_CONFIG_OS_APPLE_NAME   "apple"
 #define gq_CONFIG_OS_WINDOWS_NAME "win"
@@ -65,6 +77,7 @@
 #define gq_CONFIG_ARCH_ARMV8 5
 #define gq_CONFIG_ARCH_ARMV8_64 6
 
+#define gq_CONFIG_ARCH_UNKNOWN_NAME "unknown"
 #define gq_CONFIG_ARCH_X86_NAME "x86"
 #define gq_CONFIG_ARCH_X64_NAME "x86_64"
 #define gq_CONFIG_ARCH_ARMV6_NAME "armv6"
@@ -145,43 +158,59 @@
     #define gq_CONFIG_VERSION_ABI gq_CONFIG_VERSION_MAJOR
 #endif
 
-#ifndef gq_CONFIG_DEBUG_DEFAULT
-    #define gq_CONFIG_DEBUG_DEFAULT 0
+#ifndef gq_CONFIG_BUILD_STR_SEP
+    #define gq_CONFIG_BUILD_STR_SEP "-"
 #endif
 
-#if !defined(gq_CONFIG_DEBUG)
+#ifndef gq_CONFIG_BUILD_VARIANT_DEFAULT
+    #define gq_CONFIG_BUILD_VARIANT_DEFAULT "default"
+#endif
+
+#ifndef gq_CONFIG_BUILD_VARIANT
+    #ifdef gq__BUILD
+        #define gq_CONFIG_BUILD_VARIANT gq_STRFY(gq__BUILD)
+    #else
+        #define gq_CONFIG_BUILD_VARIANT gq_CONFIG_BUILD_VARIANT_DEFAULT
+    #endif
+#endif
+
+#ifndef gq_CONFIG_BUILD_DEBUG_DEFAULT
+    #define gq_CONFIG_BUILD_DEBUG_DEFAULT 0
+#endif
+
+#if !defined(gq_CONFIG_BUILD_DEBUG)
     #if defined(gq__DEBUG)
-        #define gq_CONFIG_DEBUG 1
+        #define gq_CONFIG_BUILD_DEBUG 1
     #elif defined(gq__PROFILE)
-        #define gq_CONFIG_DEBUG 1
+        #define gq_CONFIG_BUILD_DEBUG 1
     #else
-        #define gq_CONFIG_DEBUG gq_CONFIG_DEBUG_DEFAULT
+        #define gq_CONFIG_BUILD_DEBUG gq_CONFIG_BUILD_DEBUG_DEFAULT
     #endif
 #endif
 
-#ifndef gq_CONFIG_PROFILE_DEFAULT
-    #define gq_CONFIG_PROFILE_DEFAULT 0
+#ifndef gq_CONFIG_BUILD_PROFILE_DEFAULT
+    #define gq_CONFIG_BUILD_PROFILE_DEFAULT 0
 #endif
 
-#if !defined(gq_CONFIG_PROFILE)
+#if !defined(gq_CONFIG_BUILD_PROFILE)
     #if defined(gq__PROFILE)
-        #define gq_CONFIG_PROFILE 1
+        #define gq_CONFIG_BUILD_PROFILE 1
     #elif defined(gq__DEBUG)
-        #define gq_CONFIG_PROFILE 1
+        #define gq_CONFIG_BUILD_PROFILE 1
     #else
-        #define gq_CONFIG_PROFILE gq_CONFIG_PROFILE_DEFAULT
+        #define gq_CONFIG_BUILD_PROFILE gq_CONFIG_BUILD_PROFILE_DEFAULT
     #endif
 #endif
 
-#ifndef gq_CONFIG_STRIPPED_DEFAULT
-    #define gq_CONFIG_STRIPPED_DEFAULT !gq_CONFIG_DEBUG
+#ifndef gq_CONFIG_BUILD_STRIPPED_DEFAULT
+    #define gq_CONFIG_BUILD_STRIPPED_DEFAULT !gq_CONFIG_BUILD_DEBUG
 #endif
 
-#if !defined(gq_CONFIG_STRIPPED)
+#if !defined(gq_CONFIG_BUILD_STRIPPED)
     #if defined(gq__STRIPPED)
-        #define gq_CONFIG_STRIPPED 1
+        #define gq_CONFIG_BUILD_STRIPPED 1
     #else
-        #define gq_CONFIG_STRIPPED gq_CONFIG_STRIPPED_DEFAULT
+        #define gq_CONFIG_BUILD_STRIPPED gq_CONFIG_BUILD_STRIPPED_DEFAULT
     #endif
 #endif
 
@@ -218,17 +247,17 @@
     #endif
 #endif
 
-#ifndef gq_CONFIG_INLINEIMPL_DEFAULT
-    #define gq_CONFIG_INLINEIMPL_DEFAULT 0
+#ifndef gq_CONFIG_BUILD_INLINEIMPL_DEFAULT
+    #define gq_CONFIG_BUILD_INLINEIMPL_DEFAULT 0
 #endif
 
-#ifndef gq_CONFIG_INLINEIMPL
+#ifndef gq_CONFIG_BUILD_INLINEIMPL
     #if gq_CONFIG_BINTYPE_IS_HEADERLIB
-        #define gq_CONFIG_INLINEIMPL 1
+        #define gq_CONFIG_BUILD_INLINEIMPL 1
     #elif defined gq__INLINEIMPL
-        #define gq_CONFIG_INLINEIMPL 1
+        #define gq_CONFIG_BUILD_INLINEIMPL 1
     #else
-        #define gq_CONFIG_INLINEIMPL gq_CONFIG_INLINEIMPL_DEFAULT
+        #define gq_CONFIG_BUILD_INLINEIMPL gq_CONFIG_BUILD_INLINEIMPL_DEFAULT
     #endif
 #endif
 
@@ -240,22 +269,32 @@
 #ifndef gq_CONFIG_COMPILER_DETECTED
     #if defined(_MSC_VER)
         #define gq_CONFIG_COMPILER_DETECTED gq_CONFIG_COMPILER_MSVC
-        #if !(_MSC_VER >= 1910) // MSVC++ 2017, relaxed constexpr rules
+        #define gq_CONFIG_COMPILER_NAME gq_CONFIG_COMPILER_MSVC_NAME
+        #if !(_MSC_VER >= 1900) // Complete(?) C++11 support, most C++14 support.
             #error Unsupported MSVC version.
         #endif
+    #elif defined(__MINGW32__) || defined(__MINGW64__)
+        #define gq_CONFIG_COMPILER_DETECTED gq_CONFIG_COMPILER_MINGW
+        #define gq_CONFIG_COMPILER_NAME gq_CONFIG_COMPILER_MINGW_NAME
+    #elif defined(__CYGWIN__ )
+        #define gq_CONFIG_COMPILER_DETECTED gq_CONFIG_COMPILER_CYGWIN
+        #define gq_CONFIG_COMPILER_NAME gq_CONFIG_COMPILER_CYGWIN_NAME
     #elif defined(__clang__)
         #define gq_CONFIG_COMPILER_DETECTED gq_CONFIG_COMPILER_CLANG
+        #define gq_CONFIG_COMPILER_NAME gq_CONFIG_COMPILER_CLANG_NAME
         #if !(__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 4))
             #error Unsupported Clang C++ version.
         #endif
     #elif defined(__GNUC__)
         #define gq_CONFIG_COMPILER_DETECTED gq_CONFIG_COMPILER_GCC
-        #if __GNUC__ < 5
-            #error Unsupported G++ version.
-        #endif
+        #define gq_CONFIG_COMPILER_NAME gq_CONFIG_COMPILER_GCC_NAME
     // Insert here your custom checking (in a new elif clause).
     #else
         #define gq_CONFIG_COMPILER_DETECTED 0
+    #endif
+
+    #if gq_CONFIG_COMPILER_IS_GCC_BASED && __GNUC__ < 5
+        #error Unsupported G++ version.
     #endif
 
     #if !gq_CONFIG_COMPILER_DETECTED
@@ -263,11 +302,11 @@
     #endif
 #endif
 
-#ifndef gq_CONFIG_COMPILER_IS_GCC_LIKE
-    #if gq_CONFIG_COMPILER_IS_CLANG || gq_CONFIG_COMPILER_IS_GCC
-        #define gq_CONFIG_COMPILER_IS_GCC_LIKE 1
+#ifndef gq_CONFIG_COMPILER_NAME
+    #if gq_CONFIG_COMPILER_DETECTED
+        #define gq_CONFIG_COMPILER_NAME "missingname"
     #else
-        #define gq_CONFIG_COMPILER_IS_GCC_LIKE 0
+        #define gq_CONFIG_COMPILER_NAME gq_CONFIG_COMPILER_UNKNOWN_NAME
     #endif
 #endif
 
@@ -279,12 +318,15 @@
 //
 
 #ifndef gq_CONFIG_OS_DETECTED
-    #if defined _WIN32 || defined __WIN32__ || defined __WINDOWS__ || defined __TOS_WIN__ || defined _WIN64
+    #if defined _WIN32 || defined __WIN32__ || defined __WINDOWS__ || defined __TOS_WIN__ || defined _WIN64 || gq_CONFIG_COMPILER_IS_WINDOWS_LIKE
         #define gq_CONFIG_OS_DETECTED gq_CONFIG_OS_WINDOWS
-    #elif defined(__MAC__)
+        #define gq_CONFIG_OS_NAME gq_CONFIG_OS_WINDOWS_NAME
+    #elif defined(__MAC__) || defined(_MAC) || (defined(__APPLE__) && defined(__MACH__))
         #define gq_CONFIG_OS_DETECTED gq_CONFIG_OS_APPLE
-    #elif defined(__linux__)
+        #define gq_CONFIG_OS_NAME gq_CONFIG_OS_APPLE_NAME
+    #elif defined(__linux__) || defined(__gnu_linux__)
         #define gq_CONFIG_OS_DETECTED gq_CONFIG_OS_LINUX
+        #define gq_CONFIG_OS_NAME gq_CONFIG_OS_LINUX_NAME
     // Insert here your custom checking (in a new elif clause).
     #else
         #define gq_CONFIG_OS_DETECTED 0
@@ -292,6 +334,43 @@
 
     #if !gq_CONFIG_OS_DETECTED
         #pragma message("What OS is this? The world is so vast...")
+    #endif
+#endif
+
+#ifndef gq_CONFIG_OS_NAME
+    #if gq_CONFIG_OS_DETECTED
+        #define gq_CONFIG_OS_NAME "missingname"
+    #else
+        #define gq_CONFIG_OS_NAME gq_CONFIG_OS_UNKNOWN_NAME
+    #endif
+#endif
+
+
+//
+// [[ CORE FEATURE DETECTION: PROCESSOR ARCHITECTURE ]]
+//
+
+// Such weak tests... I just wanted a proper artifact name, with architecture name on it... Maybe that can come from
+// somewhere else? But how to do it portably?
+#ifndef gq_CONFIG_ARCH_DETECTED
+    #if defined _WIN64 || defined __MINGW64__ || defined _M_X64 || defined _M_AMD64 \
+        || defined __amd64__ || defined __amd64 || defined __x86_64__ || defined __x86_64
+        #define gq_CONFIG_ARCH_DETECTED gq_CONFIG_ARCH_X64
+        #define gq_CONFIG_ARCH_NAME gq_CONFIG_ARCH_X64_NAME
+    #elif defined _WIN32 || defined __MINGW32__ || defined __CYGWIN__ || defined _M_IX86 || defined _X86_ \
+        || defined __i386__ || defined __i486__ || defined __i586__ || defined __i686__
+        #define gq_CONFIG_ARCH_DETECTED gq_CONFIG_ARCH_X86
+        #define gq_CONFIG_ARCH_NAME gq_CONFIG_ARCH_X86_NAME
+    #else
+        #define gq_CONFIG_ARCH_DETECTED 0
+    #endif
+#endif
+
+#ifndef gq_CONFIG_ARCH_NAME
+    #if gq_CONFIG_ARCH_DETECTED
+        #define gq_CONFIG_ARCH_NAME "missingname"
+    #else
+        #define gq_CONFIG_ARCH_NAME gq_CONFIG_ARCH_UNKNOWN_NAME
     #endif
 #endif
 
@@ -306,18 +385,28 @@
 
 #ifndef gq_CONFIG_LANG_DETECTED
     #ifdef __cplusplus
-        #if __cplusplus < 201103L
-            #error Your compiler or toolkit does not properly support modern C++ (e.g. is pre-C++11).
-        #endif
-
         #if __cplusplus > 201402L // Most probably C++17. We still need to wait for C++17 to be officially published to correct this check.
             #define gq_CONFIG_LANG_DETECTED gq_CONFIG_LANG_CPP17
+            #define gq_CONFIG_LANG_HOSTED 1
         #elif __cplusplus == 201402L
             #define gq_CONFIG_LANG_DETECTED gq_CONFIG_LANG_CPP14
+            #define gq_CONFIG_LANG_HOSTED 1
         #elif __cplusplus == 201103L
             #define gq_CONFIG_LANG_DETECTED gq_CONFIG_LANG_CPP11
+            #define gq_CONFIG_LANG_HOSTED 1
+        #elif gq_CONFIG_COMPILER_IS_MSVC
+            // Microsoft's compiler may implement only a subset of modern C++, depending on its version.
+            // __cplusplus is by default conservatively defined to C++98. By MSVC 2015, the whole C++11 standard is
+            // implemented, and by MSVC 2017 most of C++14. Way too early for C++17 in Microsoft land...
+            #if _MSC_VER >= 1910 // MSVC 2017
+                #define gq_CONFIG_LANG_DETECTED gq_CONFIG_LANG_CPP14
+                #define gq_CONFIG_LANG_HOSTED 1
+            #else
+                #define gq_CONFIG_LANG_DETECTED gq_CONFIG_LANG_CPP11
+                #define gq_CONFIG_LANG_HOSTED 1
+            #endif
         #else
-            #define gq_CONFIG_LANG_DETECTED gq_CONFIG_LANG_DEFAULT
+            #error Your compiler or toolkit does not properly support modern C++ (e.g. is pre-C++11).
         #endif
     #else
         // TODO Detect C standard
@@ -352,7 +441,7 @@
 
 #if gq_CONFIG_BINTYPE_IS_HEADERLIB
     #define gq_CONFIG_INCLUDINGIMPL 1
-#elif gq_CONFIG_INLINEIMPL && gq_CONFIG_BUILDING
+#elif gq_CONFIG_BUILD_INLINEIMPL && gq_CONFIG_BUILDING
     #define gq_CONFIG_INCLUDINGIMPL 1
 #else
     #define gq_CONFIG_INCLUDINGIMPL 0
@@ -448,7 +537,7 @@
 #define gq_BEGIN_CODE namespace gq_CONFIG_ROOT_NAMESPACE_NAME { inline namespace gq_CONFIG_ABI_NAMESPACE_NAME {
 #define gq_END_CODE }}
 
-#if gq_CONFIG_BUILDING || gq_CONFIG_INLINEIMPL || gq_CONFIG_BINTYPE_IS_HEADERLIB
+#if gq_CONFIG_BUILDING || gq_CONFIG_BUILD_INLINEIMPL || gq_CONFIG_BINTYPE_IS_HEADERLIB
     #define gq_API gq_CONFIG_MARKER_API_EXPORT
     #define gq_IAPI gq_CONFIG_MARKER_IAPI_EXPORT
     #define gq_VAR gq_CONFIG_MARKER_VAR_EXPORT
@@ -464,7 +553,13 @@
     #define gq_ICLASS gq_CONFIG_MARKER_ICLS_IMPORT
 #endif
 
-#if gq_CONFIG_INLINEIMPL
+#if gq_CONFIG_BUILDING && !gq_CONFIG_BUILD_INLINEIMPL
+    #define gq_SPECIALIZED extern
+#else
+    #define gq_SPECIALIZED
+#endif
+
+#if gq_CONFIG_BUILD_INLINEIMPL
     #define gq_FIMPL inline
     #define gq_VIMPL gq_INLINEVAR_
 #else
@@ -472,20 +567,36 @@
     #define gq_VIMPL
 #endif
 
+#ifdef gq__BUILD
+    #define gq_CONFIG_BUILD_STR gq_CONFIG_ARCH_NAME \
+        gq_CONFIG_BUILD_STR_SEP gq_CONFIG_OS_NAME \
+        gq_CONFIG_BUILD_STR_SEP gq_CONFIG_COMPILER_NAME \
+        gq_CONFIG_BUILD_STR_SEP gq_CONFIG_BUILD_VARIANT
+#else
+    #define gq_CONFIG_BUILD_STR gq_CONFIG_ARCH_NAME \
+        gq_CONFIG_BUILD_STR_SEP gq_CONFIG_OS_NAME \
+        gq_CONFIG_BUILD_STR_SEP gq_CONFIG_COMPILER_NAME
+#endif
+
+#define gq_CONFIG_ARTIFACT_NAME gq_STRFY(gq_CONFIG_NAME) \
+    gq_CONFIG_BUILD_STR_SEP gq_CONFIG_VERSION_STR \
+    gq_CONFIG_BUILD_STR_SEP gq_CONFIG_BUILD_STR
+
 
 //
 // [[ PREPROCESSOR DEBUGGING ]]
 //
 
 #ifdef gq__MACRODEBUG
-#	pragma message gq_STRFY_(gq_API) ": " gq_STRFY(gq_API)
-#	pragma message gq_STRFY_(gq_IAPI) ": " gq_STRFY(gq_IAPI)
-#	pragma message gq_STRFY_(gq_FIMPL) ": " gq_STRFY(gq_FIMPL)
-#	pragma message gq_STRFY_(gq_VAR) ": " gq_STRFY(gq_VAR)
-#	pragma message gq_STRFY_(gq_IVAR) ": " gq_STRFY(gq_IVAR)
-#	pragma message gq_STRFY_(gq_VIMPL) ": " gq_STRFY(gq_VIMPL)
-#	pragma message gq_STRFY_(gq_CLASS) ": " gq_STRFY(gq_CLASS)
-#	pragma message gq_STRFY_(gq_ICLASS) ": " gq_STRFY(gq_ICLASS)
+    #pragma message (gq_STRFY_(gq_CONFIG_ARTIFACT_NAME) ": " gq_CONFIG_ARTIFACT_NAME)
+    #pragma message (gq_STRFY_(gq_API) ": " gq_STRFY(gq_API))
+    #pragma message (gq_STRFY_(gq_IAPI) ": " gq_STRFY(gq_IAPI))
+    #pragma message (gq_STRFY_(gq_FIMPL) ": " gq_STRFY(gq_FIMPL))
+    #pragma message (gq_STRFY_(gq_VAR) ": " gq_STRFY(gq_VAR))
+    #pragma message (gq_STRFY_(gq_IVAR) ": " gq_STRFY(gq_IVAR))
+    #pragma message (gq_STRFY_(gq_VIMPL) ": " gq_STRFY(gq_VIMPL))
+    #pragma message (gq_STRFY_(gq_CLASS) ": " gq_STRFY(gq_CLASS))
+    #pragma message (gq_STRFY_(gq_ICLASS) ": " gq_STRFY(gq_ICLASS))
 #endif
 
 #else
@@ -525,6 +636,7 @@ build = <platform>-<arch>-<variant> # e.g. gcc_linux-x86-debug
 
 #define gq_CONFIG_NAME_STR
 #define gq_CONFIG_VERSION_STR
+#define gq_CONFIG_BUILD_NAME
 
 
 //
@@ -533,9 +645,9 @@ build = <platform>-<arch>-<variant> # e.g. gcc_linux-x86-debug
 
 #define gq_CONFIG_BUILD_NAME
 
-#define gq_CONFIG_DEBUG
-#define gq_CONFIG_PROFILE
-#define gq_CONFIG_STRIPPED
+#define gq_CONFIG_BUILD_DEBUG
+#define gq_CONFIG_BUILD_PROFILE
+#define gq_CONFIG_BUILD_STRIPPED
 #define gq_CONFIG_BUILDING
 #define gq_CONFIG_BINTYPE
 
@@ -548,6 +660,10 @@ build = <platform>-<arch>-<variant> # e.g. gcc_linux-x86-debug
 #define gq_CONFIG_COMPILER_DETECTED
 #define gq_CONFIG_OS_DETECTED
 #define gq_CONFIG_ARCH_DETECTED
+
+#define gq_CONFIG_COMPILER_NAME
+#define gq_CONFIG_OS_NAME
+#define gq_CONFIG_ARCH_NAME
 
 #define gq_CONFIG_COMPILER_IS_GCC_LIKE
 
@@ -580,6 +696,8 @@ build = <platform>-<arch>-<variant> # e.g. gcc_linux-x86-debug
 
 #define gq_CLASS  /**< Public class definition marker. */
 #define gq_ICLASS /**< Library-Internal class definition marker. */
+
+#define gq_SPECIALIZED /**< Public marker for template specializations. */
 
 #endif
 
